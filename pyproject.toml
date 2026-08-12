@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Per-pin 12V-2x6 power monitor for ASUS ROG Astral RTX 50-series cards (IT8915FN over I2C), GTK4"
 readme = "README.md"
 license = { file = "LICENSE" }
-authors = [{ name = "Zac", email = "lanzonza@gmail.com" }]
+authors = [{ name = "Zac Lanzon", email = "lanzonza@gmail.com" }]
 requires-python = ">=3.10"
 keywords = ["nvidia", "asus", "astral", "12v-2x6", "12vhpwr", "i2c", "smbus", "hwmon", "gtk4"]
 classifiers = [
@@ -25,7 +25,7 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/CHANGEME/astral-pins"
+Homepage = "https://github.com/zaclanzon/astral-pins"
 
 [project.scripts]
 astral-pins = "astral_pins:main"

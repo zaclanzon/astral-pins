@@ -8,7 +8,7 @@ ASUS markets this hardware as *Power Detector+* and surfaces it in GPU Tweak
 on Windows. This tool talks to the same chip from Linux, read-only, with no
 driver and no vendor software.
 
-![screenshot](screenshots/panel.png)
+![screenshot](screenshots/1.png)
 
 ## What it shows
 
