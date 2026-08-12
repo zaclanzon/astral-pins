@@ -1,0 +1,3 @@
+# Give members of the i2c group access to the kernel I2C device interface.
+# Install: sudo cp 60-i2c-group.rules /etc/udev/rules.d/
+KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
