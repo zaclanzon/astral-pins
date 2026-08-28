@@ -16,6 +16,7 @@ driver and no vendor software.
 - A 2-minute rolling graph of per-pin current
 - Total connector watts and amps
 - GPU temperature, board power, utilization, and VRAM via `nvidia-smi`
+- AIO coolant temperature via a `rog_ryujin` hwmon, when one is present
 - A red alert banner if any pin sustains more than 9.2 A (ASUS's own warning
   threshold) for 5+ seconds, or if a pin reads ~0 A while the connector is
   under load — the classic melted-connector dropout signature

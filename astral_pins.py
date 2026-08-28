@@ -8,6 +8,7 @@ cards directly over the kernel I2C interface (read-only), and renders:
   - six per-pin gauges (volts / amps) with color states
   - a 2-minute rolling history graph of per-pin current
   - GPU temp / power / utilization via nvidia-smi
+  - AIO coolant temp via the ROG Ryujin hwmon (if present)
   - a red alert state if any pin sits above 9.2 A (ASUS's own
     warning threshold) for 5+ seconds, or a pin reads ~0 A while
     the connector is under load (dropout signature)
@@ -150,6 +151,24 @@ def find_bus(explicit=None):
         "IT8915FN not found at 0x2b on any NVIDIA I2C bus.\n"
         "Is i2c-dev loaded?  (sudo modprobe i2c-dev)"
     )
+
+
+def coolant_temp():
+    """AIO coolant °C from the ROG Ryujin's hwmon, or None.
+
+    Resolved by name on every call: the hwmon index moves across boots (USB
+    enumeration) and the device can drop and re-enumerate mid-session. Two
+    sysfs reads every SMI_S seconds is free.
+    """
+    for path in glob.glob("/sys/class/hwmon/hwmon*/name"):
+        try:
+            if open(path).read().strip() == "rog_ryujin":
+                mdeg = open(os.path.join(os.path.dirname(path),
+                                         "temp1_input")).read()
+                return int(mdeg) / 1000.0
+        except (OSError, ValueError):
+            continue
+    return None
 
 
 # ---------------------------------------------------------------- GTK app
@@ -297,6 +316,9 @@ class App(Gtk.Application):
                                  f"{float(mu)/1024:.1f}/{float(mt)/1024:.0f} GiB VRAM")
             except Exception:
                 self.smi_text = "nvidia-smi unavailable"
+            c = coolant_temp()
+            if c is not None:
+                self.smi_text += f"   ·   coolant {c:.1f} °C"
             time.sleep(SMI_S)
 
     def refresh_smi_label(self):
