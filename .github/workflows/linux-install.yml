@@ -30,7 +30,7 @@ jobs:
           - distro: openSUSE Tumbleweed
             image: opensuse/tumbleweed:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install distribution packages
         run: sh setup.sh --dependencies-only
       - name: Check dependencies and installer
@@ -44,7 +44,7 @@ jobs:
     name: GTK integration and packaging
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install test dependencies
         run: |
           sudo apt-get update
