@@ -42,58 +42,142 @@ kernel's **SMBus read-byte-data ioctl** path (what `i2cget -y BUS 0x2b REG b`
 does). So that is exactly what this tool does, 24 register reads per poll,
 via `ioctl(fd, I2C_SMBUS, ...)` with no external dependencies.
 
-## Requirements
+## Install on Linux
 
-- ASUS ROG Astral RTX 50-series card (tested: RTX 5090 Astral)
-- NVIDIA proprietary driver (exposes the I2C buses; also used for `nvidia-smi`)
-- Python 3.10+, GTK4, and PyGObject — stock on Ubuntu GNOME:
+Use a Linux desktop with **Python 3.10+, GTK4, PyGObject, and Cairo bindings**.
+The installer is independent of the package manager and CPU architecture; your
+distro must provide those dependencies. A graphical Wayland or X11 session is
+needed to open the app. GNOME itself is not required.
 
-  ```
-  sudo apt install python3-gi gir1.2-gtk-4.0
-  ```
+### 1. Install dependencies for your distro family
 
-## Setup (one time)
+Choose one group below. Commands target maintained releases that offer Python
+3.10+ and GTK4; older releases may need an OS upgrade.
 
-The kernel I2C device interface must be loaded, and your user needs access
-to `/dev/i2c-*`:
+**Debian / Ubuntu family** — Debian, Ubuntu, Linux Mint, Pop!_OS, elementary OS
 
+```sh
+sudo apt update
+sudo apt install python3 python3-gi python3-gi-cairo gir1.2-gtk-4.0
 ```
+
+**Fedora / RHEL family** — Fedora; RHEL, Rocky Linux, AlmaLinux, and CentOS Stream
+where these packages are available in the enabled repositories
+
+```sh
+sudo dnf install python3 python3-gobject gtk4
+```
+
+**Arch family** — Arch Linux, EndeavourOS, Manjaro
+
+```sh
+sudo pacman -Syu python python-gobject python-cairo gtk4
+```
+
+**openSUSE family** — Tumbleweed and Leap releases with a suitable Python version
+
+```sh
+sudo zypper install python3 python3-gobject python3-gobject-Gdk typelib-1_0-Gtk-4_0 libgtk-4-1
+```
+
+Package names follow the [PyGObject installation guide](https://pygobject.gnome.org/getting_started.html).
+If your distro packages multiple Python versions, install the matching bindings
+and use that interpreter for every command below.
+
+**Other distributions and immutable systems** — install the same dependencies
+through your system's package manager or declarative configuration, then use the
+shared installer below. NixOS, Alpine, Gentoo, and immutable Fedora variants do
+not share the commands above. Kernel modules, NVIDIA drivers, and device access
+must be configured on the host. Installation inside a container alone does not
+provide access to the GPU's I2C device. These systems have not been tested.
+
+### 2. Install the app
+
+Download or clone this repository and open a terminal in its directory:
+
+```sh
+python3 install.py --check
+python3 install.py
+~/.local/bin/astral-pins --demo
+```
+
+Run the installer as your normal user. It checks the selected Python's GTK4 and
+Cairo bindings, adds `~/.local/bin/astral-pins`, and creates an application-menu
+entry. No pip, virtual environment, or administrator access is needed for this
+step. The demo uses simulated readings and needs no GPU hardware.
+
+The launcher runs **this checkout**, so keep it in its permanent location.
+Pulling updates here updates the installed app; restart it to load the changes.
+If you move the checkout or change Python environments, rerun `install.py`.
+The desktop entry respects `XDG_DATA_HOME`; `--prefix /path` instead installs into
+`/path/bin` and `/path/share/applications`. Add `~/.local/bin` to your `PATH` if
+you want to type just `astral-pins`.
+
+### 3. Enable live monitoring
+
+Live readings require an **ASUS ROG Astral RTX 50-series card** (tested with the
+RTX 5090 Astral), the NVIDIA proprietary driver exposing its I2C buses, and
+permission to read `/dev/i2c-*`. Other GPUs can only use the demo. GPU telemetry
+uses `nvidia-smi`; coolant temperature is optional and needs a `rog_ryujin` hwmon.
+
+On systems using udev and the standard group-management tools:
+
+```sh
 sudo modprobe i2c-dev
-echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf
-
 sudo groupadd -f i2c
-sudo cp contrib/60-i2c-group.rules /etc/udev/rules.d/
-sudo udevadm control --reload && sudo udevadm trigger
-sudo usermod -aG i2c "$USER"   # then log out and back in
+sudo install -m 644 contrib/60-i2c-group.rules /etc/udev/rules.d/60-i2c-group.rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=i2c-dev
+sudo usermod -aG i2c "$USER"
 ```
 
-Don't run the panel with sudo; the group route is safer and works fine.
+Log out and back in after changing group membership. On systems using
+`systemd-modules-load`, persist the module across boots:
 
-## Run
-
-```
-./astral_pins.py            # auto-scans NVIDIA I2C buses for the chip
-./astral_pins.py --bus 7    # skip the scan if you know the bus
-./astral_pins.py --demo     # simulated preview; no I2C, hwmon, or nvidia-smi access
+```sh
+printf '%s\n' i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf
 ```
 
-Or install it as a command:
+For another init system or declarative OS, configure `i2c-dev` loading and I2C
+group access using that system's mechanism. Don't run the app with sudo.
 
-```
-pipx install --system-site-packages .
-astral-pins
+```sh
+~/.local/bin/astral-pins            # scan NVIDIA I2C buses
+~/.local/bin/astral-pins --bus 7    # use a known bus
 ```
 
-(`--system-site-packages` lets the venv see the distro's PyGObject/GTK
-bindings instead of trying to build them from source.)
+### Other ways to run
 
-A desktop entry is included in `contrib/` if you want it in your launcher:
+Run directly from the checkout with `python3 astral_pins.py --demo`, or install
+an independent copy through pipx:
 
+```sh
+pipx install --system-site-packages --python /usr/bin/python3 .
+astral-pins --demo
 ```
-cp contrib/astral-pins.desktop ~/.local/share/applications/
+
+Choose the interpreter that has the distro bindings installed. The pipx copy
+must be reinstalled to pick up source changes; the shared installer above keeps
+the checkout as the source of truth.
+
+### Uninstall
+
+For the default installer paths:
+
+```sh
+rm ~/.local/bin/astral-pins
+rm "${XDG_DATA_HOME:-$HOME/.local/share}/applications/astral-pins.desktop"
 ```
+
+For a custom prefix, remove its `bin/astral-pins` and
+`share/applications/astral-pins.desktop`. This leaves the checkout and hardware
+configuration intact. If you installed with pipx, use `pipx uninstall astral-pins`.
 
 ## Development checks
+
+The Linux installation workflow checks Ubuntu 22.04, Debian stable, Fedora,
+Arch Linux, and openSUSE Tumbleweed. It also runs the GTK tests and builds a
+Python wheel on Ubuntu. These checks do not exercise physical GPU hardware.
 
 With GTK4 and a display available:
 
