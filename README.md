@@ -8,18 +8,26 @@ ASUS markets this hardware as *Power Detector+* and surfaces it in GPU Tweak
 on Windows. This tool talks to the same chip from Linux, read-only, with no
 driver and no vendor software.
 
-![screenshot](screenshots/1.png)
+![Astral Pins redesigned interface with simulated readings](screenshots/2.png)
 
 ## What it shows
 
-- Six per-pin gauges (volts / amps) with OK / warn / alarm color states
-- A 2-minute rolling graph of per-pin current
+- Six color-coded pin cards with volts, amps, gauges, and explicit status labels
+- A 2-minute rolling graph with a six-pin legend, warning/alarm guides, and timestamps
+- Hover over the plot for a horizontal dotted current guide and each pin's highest
+  visible reading at or above that level. Matching peaks are marked on the graph;
+  the summary identifies pins below the line or without history.
 - Total connector watts and amps
 - GPU temperature, board power, utilization, and VRAM via `nvidia-smi`
 - AIO coolant temperature via a `rog_ryujin` hwmon, when one is present
 - A red alert banner if any pin sustains more than 9.2 A (ASUS's own warning
   threshold) for 5+ seconds, or if a pin reads ~0 A while the connector is
   under load — the classic melted-connector dropout signature
+
+The slate-and-blue interface adapts to narrower windows by wrapping pin cards
+and telemetry tiles, with vertical scrolling when needed. Sensor read failures
+replace live readings with dashes and label the remaining plot as historical.
+GPU telemetry remains independent of connector connectivity.
 
 ## How it works (the interesting part)
 
@@ -66,6 +74,7 @@ Don't run the panel with sudo; the group route is safer and works fine.
 ```
 ./astral_pins.py            # auto-scans NVIDIA I2C buses for the chip
 ./astral_pins.py --bus 7    # skip the scan if you know the bus
+./astral_pins.py --demo     # simulated preview; no I2C, hwmon, or nvidia-smi access
 ```
 
 Or install it as a command:
@@ -82,6 +91,26 @@ A desktop entry is included in `contrib/` if you want it in your launcher:
 
 ```
 cp contrib/astral-pins.desktop ~/.local/share/applications/
+```
+
+## Development checks
+
+With GTK4 and a display available:
+
+```
+python3 -m unittest discover -s tests -v
+python3 -m py_compile astral_pins.py
+```
+
+The integration checks use simulated samples for threshold boundaries, alarm
+duration, dropout detection, stale-data recovery, history, and missing telemetry.
+They skip when no GTK display is available. A headless GTK Broadway display can
+be used instead:
+
+```
+gtk4-broadwayd -a 127.0.0.1 -p 8097 :7
+# In another terminal:
+GDK_BACKEND=broadway BROADWAY_DISPLAY=:7 python3 -m unittest discover -s tests -v
 ```
 
 ## Safety
