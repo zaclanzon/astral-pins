@@ -19,7 +19,7 @@ linux_packages() {
         # insufficient for DrawingArea callbacks. Keep Cairo explicit too.
         fedora) printf '%s\n' 'python3 python3-gobject python3-cairo gtk4 kmod systemd-udev shadow-utils' ;;
         arch) printf '%s\n' 'python python-gobject python-cairo gtk4 kmod systemd shadow' ;;
-        suse) printf '%s\n' 'python3 python3-gobject python3-gobject-Gdk typelib-1_0-Gtk-4_0 libgtk-4-1 kmod systemd-udev shadow' ;;
+        suse) printf '%s\n' 'python3 python3-gobject python3-gobject-Gdk typelib-1_0-Gtk-4_0 libgtk-4-1 kmod udev shadow' ;;
         *) return 1 ;;
     esac
 }
