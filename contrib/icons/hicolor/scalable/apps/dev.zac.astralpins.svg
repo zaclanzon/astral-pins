@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="slate" x2="1" y2="1"><stop stop-color="#24394b"/><stop offset="1" stop-color="#11151b"/></linearGradient>
+    <linearGradient id="signal" x2="1" y2="1"><stop stop-color="#90e5ff"/><stop offset="1" stop-color="#ab9bff"/></linearGradient>
+  </defs>
+  <rect x="8" y="10" width="112" height="112" rx="27" fill="#080c12" opacity=".6"/>
+  <rect x="8" y="6" width="112" height="112" rx="27" fill="url(#slate)" stroke="#3b5268" stroke-width="2"/>
+  <path d="M36 80 64 28 92 80M46 63h36" fill="none" stroke="#69cfff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" opacity=".13"/>
+  <path d="M36 80 64 28 92 80M46 63h36" fill="none" stroke="url(#signal)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m64 19 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z" fill="#e0f7ff"/>
+  <g stroke-width="7" stroke-linecap="round">
+    <path d="M34 94v8" stroke="#57bfff"/>
+    <path d="M46 94v8" stroke="#71e49b"/>
+    <path d="M58 94v8" stroke="#ffd078"/>
+    <path d="M70 94v8" stroke="#ec8dde"/>
+    <path d="M82 94v8" stroke="#a397ff"/>
+    <path d="M94 94v8" stroke="#91e5e2"/>
+  </g>
+</svg>

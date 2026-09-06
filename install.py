@@ -4,6 +4,8 @@ import argparse
 import os
 from pathlib import Path
 import shlex
+import shutil
+import subprocess
 import sys
 
 
@@ -38,15 +40,20 @@ def desktop_quote(value):
 
 def install(source, prefix, data_home, python):
     source = Path(source).resolve()
-    if not (source / "astral_pins.py").is_file():
+    app_id = "dev.zac.astralpins"
+    icon_source = source / "contrib/icons/hicolor/scalable/apps" / f"{app_id}.svg"
+    if not (source / "astral_pins.py").is_file() or not icon_source.is_file():
         raise RuntimeError("Run install.py from a complete Astral Pins checkout.")
     launcher = Path(prefix).absolute() / "bin" / "astral-pins"
-    desktop = Path(data_home).absolute() / "applications" / "astral-pins.desktop"
+    desktop = Path(data_home).absolute() / "applications" / f"{app_id}.desktop"
+    icon = Path(data_home).absolute() / "icons/hicolor/scalable/apps" / f"{app_id}.svg"
     for path in (source, launcher, desktop, Path(python)):
         if any(char in str(path) for char in ('\n', '\r', '\0')):
             raise RuntimeError("Installation paths cannot contain line breaks or NUL bytes.")
     launcher.parent.mkdir(parents=True, exist_ok=True)
     desktop.parent.mkdir(parents=True, exist_ok=True)
+    icon.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(icon_source, icon)
     launcher.write_text(
         '#!/bin/sh\nexec ' + shlex.quote(str(python)) + ' ' +
         shlex.quote(str(source / "astral_pins.py")) + ' "$@"\n'
@@ -55,9 +62,22 @@ def install(source, prefix, data_home, python):
     desktop.write_text(
         "[Desktop Entry]\nType=Application\nName=Astral Pins\n"
         "Comment=Per-pin power monitoring for ASUS ROG Astral cards\n"
-        f"Exec={desktop_quote(launcher)}\nIcon=utilities-system-monitor\n"
+        f"Exec={desktop_quote(launcher)}\nIcon={app_id}\nStartupWMClass={app_id}\n"
         "Terminal=false\nCategories=System;Monitor;\nKeywords=gpu;power;i2c;astral;\n"
     )
+    legacy = desktop.with_name("astral-pins.desktop")
+    if legacy.is_file():
+        legacy.unlink()
+    for tool, args in (
+        ("gtk-update-icon-cache", ["-f", "-t", str(icon.parents[2])]),
+        ("update-desktop-database", [str(desktop.parent)]),
+    ):
+        executable = shutil.which(tool)
+        if executable:
+            try:
+                subprocess.run([executable, *args], capture_output=True, timeout=15, check=False)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
     return launcher, desktop
 
 

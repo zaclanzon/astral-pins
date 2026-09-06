@@ -21,6 +21,7 @@ Requires: python3-gi, gir1.2-gtk-4.0 (stock on Ubuntu GNOME),
 membership in the i2c group (or run with sudo, but don't).
 """
 
+from pathlib import Path
 import argparse
 import ctypes
 import fcntl
@@ -369,6 +370,10 @@ class App(Gtk.Application):
         provider.load_from_data(CSS.encode())
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        source_icons = Path(__file__).resolve().parent / "contrib/icons"
+        if source_icons.is_dir():
+            Gtk.IconTheme.get_for_display(Gdk.Display.get_default()).add_search_path(str(source_icons))
+        Gtk.Window.set_default_icon_name("dev.zac.astralpins")
         win = Gtk.ApplicationWindow(application=self, title="Astral Pins")
         win.set_default_size(1120, 940)
         header = Gtk.HeaderBar()
