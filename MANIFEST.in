@@ -1,0 +1,5 @@
+include install.py
+recursive-include contrib *.desktop *.rules
+recursive-include tests *.py
+include setup.sh
+recursive-include scripts *.sh

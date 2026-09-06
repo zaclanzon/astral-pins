@@ -1,0 +1,83 @@
+name: Linux installation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 8 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: Ubuntu 22.04 (Python 3.10)
+            image: ubuntu:22.04
+          - distro: Debian stable
+            image: debian:stable
+          - distro: Fedora
+            image: fedora:latest
+          - distro: Arch Linux
+            image: archlinux:latest
+          - distro: openSUSE Tumbleweed
+            image: opensuse/tumbleweed:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install distribution packages
+        run: sh setup.sh --dependencies-only
+      - name: Check dependencies and installer
+        run: |
+          python3 install.py --check
+          python3 -m unittest discover -s tests -p "test_*install*.py" -v
+          python3 install.py --prefix /tmp/astral-install
+          /tmp/astral-install/bin/astral-pins --help
+
+  gtk:
+    name: GTK integration and packaging
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-gi-cairo gir1.2-gtk-4.0 python3-pip xvfb desktop-file-utils
+      - name: Run tests and build wheel
+        run: |
+          sh setup.sh --demo
+          xvfb-run -a /usr/bin/python3 -m unittest discover -s tests -v
+          /usr/bin/python3 install.py --prefix /tmp/astral-install
+          desktop-file-validate /tmp/astral-install/share/applications/astral-pins.desktop
+          /usr/bin/python3 -m pip wheel --no-deps --wheel-dir /tmp/wheels .
+
+  maintenance:
+    name: Report dependency breakage
+    needs: [install, gtk]
+    if: always() && github.event_name == 'schedule' && (needs.install.result == 'failure' || needs.gtk.result == 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open a maintenance issue if none is open
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Linux dependency compatibility needs review"
+          existing=$(gh issue list --state open --search "$title in:title" --json number --jq 'length')
+          if [ "$existing" = 0 ]; then
+            cat > /tmp/dependency-review.md <<EOF
+          The weekly Linux setup check failed: $RUN_URL
+
+          Check distro package names and GTK/PyGObject/Cairo compatibility in scripts/linux-deps.sh. Reproduce the failing setup job, update the shared package list or app as needed, and rerun the full matrix before closing this issue. NVIDIA driver installation and real I2C access are outside the container tests.
+          EOF
+            gh issue create --title "$title" --body-file /tmp/dependency-review.md
+          fi

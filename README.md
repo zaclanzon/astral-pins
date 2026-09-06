@@ -42,58 +42,58 @@ kernel's **SMBus read-byte-data ioctl** path (what `i2cget -y BUS 0x2b REG b`
 does). So that is exactly what this tool does, 24 register reads per poll,
 via `ioctl(fd, I2C_SMBUS, ...)` with no external dependencies.
 
-## Requirements
+## Install on Linux
 
-- ASUS ROG Astral RTX 50-series card (tested: RTX 5090 Astral)
-- NVIDIA proprietary driver (exposes the I2C buses; also used for `nvidia-smi`)
-- Python 3.10+, GTK4, and PyGObject — stock on Ubuntu GNOME:
+From this repository's directory, run as your normal user:
 
-  ```
-  sudo apt install python3-gi gir1.2-gtk-4.0
-  ```
-
-## Setup (one time)
-
-The kernel I2C device interface must be loaded, and your user needs access
-to `/dev/i2c-*`:
-
-```
-sudo modprobe i2c-dev
-echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf
-
-sudo groupadd -f i2c
-sudo cp contrib/60-i2c-group.rules /etc/udev/rules.d/
-sudo udevadm control --reload && sudo udevadm trigger
-sudo usermod -aG i2c "$USER"   # then log out and back in
+```sh
+sh setup.sh
 ```
 
-Don't run the panel with sudo; the group route is safer and works fine.
+Setup detects your distro, installs Python/GTK4/Cairo and device-access tools,
+configures I2C permissions and systemd module loading, and adds the app to your
+menu. It prompts for sudo when needed. **Log out and back in**, then open
+**Astral Pins** or run `~/.local/bin/astral-pins`.
 
-## Run
+| Distro family | Includes |
+| --- | --- |
+| Debian / Ubuntu | Mint, Pop!_OS, elementary OS |
+| Fedora / RHEL | Rocky, AlmaLinux, CentOS Stream with required repos enabled |
+| Arch | EndeavourOS, Manjaro |
+| openSUSE | Tumbleweed, compatible Leap releases |
 
-```
-./astral_pins.py            # auto-scans NVIDIA I2C buses for the chip
-./astral_pins.py --bus 7    # skip the scan if you know the bus
-./astral_pins.py --demo     # simulated preview; no I2C, hwmon, or nvidia-smi access
-```
+Requires a desktop, Python 3.10+ availability, an **Astral RTX 50-series GPU**,
+and a working NVIDIA proprietary driver. Setup checks the driver; install it
+through your distro's tools if missing. Arch setup includes a full system
+upgrade. Other distros and immutable systems need their native dependency and
+host configuration tools; use `python3 install.py` after configuring them.
 
-Or install it as a command:
+- **Preview without hardware:** `sh setup.sh --demo`
+- **Inspect the plan:** `sh setup.sh --dry-run`
+- **Check installed bindings:** `python3 install.py --check`
 
-```
-pipx install --system-site-packages .
-astral-pins
-```
+**Keep this checkout:** the launcher uses it directly. Pull updates and restart
+the app; rerun setup to refresh dependencies or after moving the checkout.
+Libraries are managed by your distro's normal updater. Weekly CI installs current
+packages on all five test distros and opens a maintenance issue if compatibility
+breaks; Dependabot checks CI actions weekly. These schedules start after merge.
 
-(`--system-site-packages` lets the venv see the distro's PyGObject/GTK
-bindings instead of trying to build them from source.)
+Package names, including Fedora's full GObject/Cairo bindings, live in
+[scripts/linux-deps.sh](scripts/linux-deps.sh). Non-systemd hosts need their own
+boot-time `i2c-dev` configuration. No automatic NVIDIA driver replacement is performed.
 
-A desktop entry is included in `contrib/` if you want it in your launcher:
+To uninstall the default launchers:
 
-```
-cp contrib/astral-pins.desktop ~/.local/share/applications/
+```sh
+rm ~/.local/bin/astral-pins
+rm "${XDG_DATA_HOME:-$HOME/.local/share}/applications/astral-pins.desktop"
 ```
 
 ## Development checks
+
+The Linux installation workflow checks Ubuntu 22.04, Debian stable, Fedora,
+Arch Linux, and openSUSE Tumbleweed. It also runs the GTK tests and builds a
+Python wheel on Ubuntu. These checks do not exercise physical GPU hardware.
 
 With GTK4 and a display available:
 
