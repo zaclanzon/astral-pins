@@ -1,9 +1,19 @@
+# Group minor/patch version updates; security update policy is unchanged.
+# Spread weekly checks across repos and ecosystems to reduce CI bursts.
 version: 2
 updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-    groups:
-      github-actions:
-        patterns: ["*"]
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+    time: '13:00'
+    timezone: America/Detroit
+  groups:
+    github-actions:
+      applies-to: version-updates
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
