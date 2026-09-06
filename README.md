@@ -44,88 +44,45 @@ via `ioctl(fd, I2C_SMBUS, ...)` with no external dependencies.
 
 ## Install on Linux
 
-Requires **Python 3.10+, GTK4, PyGObject, Cairo bindings**, and a Wayland or X11 desktop.
-
-### 1. Install dependencies
-
-**Debian / Ubuntu** — includes Mint, Pop!_OS, and elementary OS
+From this repository's directory, run as your normal user:
 
 ```sh
-sudo apt update
-sudo apt install python3 python3-gi python3-gi-cairo gir1.2-gtk-4.0
+sh setup.sh
 ```
 
-**Fedora / RHEL** — includes Rocky, AlmaLinux, and CentOS Stream where packages are available
+Setup detects your distro, installs Python/GTK4/Cairo and device-access tools,
+configures I2C permissions and systemd module loading, and adds the app to your
+menu. It prompts for sudo when needed. **Log out and back in**, then open
+**Astral Pins** or run `~/.local/bin/astral-pins`.
 
-```sh
-sudo dnf install python3 python3-gobject gtk4
-```
+| Distro family | Includes |
+| --- | --- |
+| Debian / Ubuntu | Mint, Pop!_OS, elementary OS |
+| Fedora / RHEL | Rocky, AlmaLinux, CentOS Stream with required repos enabled |
+| Arch | EndeavourOS, Manjaro |
+| openSUSE | Tumbleweed, compatible Leap releases |
 
-**Arch** — includes EndeavourOS and Manjaro
+Requires a desktop, Python 3.10+ availability, an **Astral RTX 50-series GPU**,
+and a working NVIDIA proprietary driver. Setup checks the driver; install it
+through your distro's tools if missing. Arch setup includes a full system
+upgrade. Other distros and immutable systems need their native dependency and
+host configuration tools; use `python3 install.py` after configuring them.
 
-```sh
-sudo pacman -Syu python python-gobject python-cairo gtk4
-```
+- **Preview without hardware:** `sh setup.sh --demo`
+- **Inspect the plan:** `sh setup.sh --dry-run`
+- **Check installed bindings:** `python3 install.py --check`
 
-**openSUSE** — Tumbleweed and compatible Leap releases
+**Keep this checkout:** the launcher uses it directly. Pull updates and restart
+the app; rerun setup to refresh dependencies or after moving the checkout.
+Libraries are managed by your distro's normal updater. Weekly CI installs current
+packages on all five test distros and opens a maintenance issue if compatibility
+breaks; Dependabot checks CI actions weekly. These schedules start after merge.
 
-```sh
-sudo zypper install python3 python3-gobject python3-gobject-Gdk typelib-1_0-Gtk-4_0 libgtk-4-1
-```
+Package names, including Fedora's full GObject/Cairo bindings, live in
+[scripts/linux-deps.sh](scripts/linux-deps.sh). Non-systemd hosts need their own
+boot-time `i2c-dev` configuration. No automatic NVIDIA driver replacement is performed.
 
-Use a release that provides Python 3.10+ and matching bindings. For other distros
-or immutable systems, install the same dependencies through your system's tools;
-these systems are untested. See the [PyGObject guide](https://pygobject.gnome.org/getting_started.html).
-
-### 2. Install and preview
-
-From this repository's directory, as your normal user:
-
-```sh
-python3 install.py
-~/.local/bin/astral-pins --demo
-```
-
-The installer checks dependencies and creates a command and desktop-menu entry.
-The demo needs no GPU. **Keep this checkout:** the launcher runs it directly.
-Pull updates and restart the app; rerun the installer if you move the checkout.
-
-Options: `--check` checks dependencies only; `--prefix /path` changes the install
-location. Desktop entries respect `XDG_DATA_HOME`. Add `~/.local/bin` to `PATH`
-to use the short command `astral-pins`.
-
-### 3. Enable live readings
-
-Requires an **ASUS ROG Astral RTX 50-series GPU**, the NVIDIA proprietary driver,
-and I2C device access. Tested with the RTX 5090 Astral.
-
-On systems with udev and standard group-management tools:
-
-```sh
-sudo modprobe i2c-dev
-sudo groupadd -f i2c
-sudo install -m 644 contrib/60-i2c-group.rules /etc/udev/rules.d/60-i2c-group.rules
-sudo udevadm control --reload-rules
-sudo udevadm trigger --subsystem-match=i2c-dev
-sudo usermod -aG i2c "$USER"
-```
-
-**Log out and back in.** With `systemd-modules-load`, also enable loading at boot:
-
-```sh
-printf '%s\n' i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf
-```
-
-Other init systems need equivalent host configuration. Run the app without sudo:
-
-```sh
-~/.local/bin/astral-pins           # auto-detect the bus
-~/.local/bin/astral-pins --bus 7   # or select one
-```
-
-### Uninstall
-
-Remove the launchers (adjust paths if you used `--prefix`):
+To uninstall the default launchers:
 
 ```sh
 rm ~/.local/bin/astral-pins

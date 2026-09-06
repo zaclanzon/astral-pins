@@ -21,8 +21,8 @@ def check_dependencies():
     except (ImportError, ValueError) as exc:
         raise RuntimeError(
             "GTK4, PyGObject, or the Cairo bindings are missing for "
-            f"{sys.executable}.\nInstall the packages for your distro family in "
-            "README.md, then rerun this script with that distro's Python.\n"
+            f"{sys.executable}.\nRun sh setup.sh --demo to install distro dependencies, "
+            "or use your system Python with the matching GTK/Cairo bindings.\n"
             f"Details: {exc}"
         ) from exc
 
