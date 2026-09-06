@@ -1,9 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Astral 12V-2x6 Monitor
+Name=Astral Pins
 Comment=Per-pin power monitoring for ASUS ROG Astral cards
 Exec=astral-pins
-Icon=utilities-system-monitor
+Icon=dev.zac.astralpins
+StartupWMClass=dev.zac.astralpins
 Terminal=false
 Categories=System;Monitor;
 Keywords=gpu;power;i2c;astral;

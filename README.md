@@ -74,6 +74,9 @@ host configuration tools; use `python3 install.py` after configuring them.
 
 **Keep this checkout:** the launcher uses it directly. Pull updates and restart
 the app; rerun setup to refresh dependencies or after moving the checkout.
+The launcher and taskbar use the app’s A-and-six-pins logo. The desktop ID
+matches its GTK application ID.
+
 Libraries are managed by your distro's normal updater. Weekly CI installs current
 packages on all five test distros and opens a maintenance issue if compatibility
 breaks; Dependabot checks CI actions weekly. These schedules start after merge.
@@ -86,7 +89,8 @@ To uninstall the default launchers:
 
 ```sh
 rm ~/.local/bin/astral-pins
-rm "${XDG_DATA_HOME:-$HOME/.local/share}/applications/astral-pins.desktop"
+rm "${XDG_DATA_HOME:-$HOME/.local/share}/applications/dev.zac.astralpins.desktop"
+rm "${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/scalable/apps/dev.zac.astralpins.svg"
 ```
 
 ## Development checks

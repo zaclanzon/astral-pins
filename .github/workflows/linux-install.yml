@@ -54,7 +54,7 @@ jobs:
           sh setup.sh --demo
           xvfb-run -a /usr/bin/python3 -m unittest discover -s tests -v
           /usr/bin/python3 install.py --prefix /tmp/astral-install
-          desktop-file-validate /tmp/astral-install/share/applications/astral-pins.desktop
+          desktop-file-validate /tmp/astral-install/share/applications/dev.zac.astralpins.desktop
           /usr/bin/python3 -m pip wheel --no-deps --wheel-dir /tmp/wheels .
 
   maintenance:

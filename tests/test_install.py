@@ -1,4 +1,5 @@
 """Installer checks need no display or hardware."""
+import shutil
 import os
 from pathlib import Path
 import subprocess
@@ -11,17 +12,26 @@ import install
 
 
 class InstallTests(unittest.TestCase):
+    def add_icon(self, source):
+        relative = Path("contrib/icons/hicolor/scalable/apps/dev.zac.astralpins.svg")
+        (source / relative).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(Path(install.__file__).parent / relative, source / relative)
+
     def test_launcher_handles_spaces_and_shell_characters(self):
         with tempfile.TemporaryDirectory(prefix="astral install ") as temp:
             root = Path(temp)
             source = root / "source ' $ ` %"
             source.mkdir()
+            self.add_icon(source)
             (source / "astral_pins.py").write_text("import sys; print(repr(sys.argv[1:]))\n")
             launcher, desktop = install.install(source, root / "prefix", root / "data", sys.executable)
             result = subprocess.run([str(launcher), "--demo", "a b", "$literal"],
                                     capture_output=True, text=True, check=True)
             self.assertEqual(result.stdout.strip(), "['--demo', 'a b', '$literal']")
             self.assertTrue(os.access(launcher, os.X_OK))
+            self.assertEqual(desktop.name, "dev.zac.astralpins.desktop")
+            self.assertIn("Icon=dev.zac.astralpins", desktop.read_text())
+            self.assertTrue((root / "data/icons/hicolor/scalable/apps/dev.zac.astralpins.svg").is_file())
             self.assertIn(f'Exec="{launcher}"', desktop.read_text())
             (source / "astral_pins.py").write_text("print('updated checkout')\n")
             result = subprocess.run([str(launcher)], capture_output=True, text=True, check=True)
@@ -31,6 +41,7 @@ class InstallTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "astral_pins.py").touch()
+            self.add_icon(root)
             other = root / "unrelated"
             other.write_text("keep")
             first = install.install(root, root, root / "share", sys.executable)
