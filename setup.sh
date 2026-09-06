@@ -57,6 +57,19 @@ as_root() {
         sudo "$@"
     fi
 }
+# Tumbleweed mirrors are briefly inconsistent while they sync, so a single
+# refresh can fail on a missing repodata file. Retry, then let install refresh.
+zypper_refresh() {
+    zr_attempt=1
+    while [ "$zr_attempt" -le 3 ]; do
+        as_root zypper --non-interactive --gpg-auto-import-keys refresh --force && return 0
+        echo "zypper refresh failed (attempt $zr_attempt/3); retrying in 15s." >&2
+        zr_attempt=$((zr_attempt + 1))
+        sleep 15
+    done
+    echo 'zypper refresh kept failing; continuing so install can refresh itself.' >&2
+    return 0
+}
 # Intentional word splitting: package lists are fixed identifiers in linux-deps.sh.
 case "$family" in
     debian)
@@ -64,8 +77,8 @@ case "$family" in
         as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y $packages ;;
     fedora) as_root dnf --refresh install -y $packages ;;
     arch) as_root pacman -Syu --noconfirm $packages ;;
-    suse) as_root zypper --non-interactive refresh
-          as_root zypper --non-interactive install $packages ;;
+    suse) zypper_refresh
+        as_root zypper --non-interactive install $packages ;;
 esac
 setup_python=/usr/bin/python3
 [ -x "$setup_python" ] || setup_python=$(command -v python3)
