@@ -375,11 +375,14 @@ class App(Gtk.Application):
             Gtk.IconTheme.get_for_display(Gdk.Display.get_default()).add_search_path(str(source_icons))
         Gtk.Window.set_default_icon_name("dev.zac.astralpins")
         win = Gtk.ApplicationWindow(application=self, title="Astral Pins")
-        win.set_default_size(1120, 940)
+        win.set_default_size(1120, -1)
         header = Gtk.HeaderBar()
         header.set_title_widget(label("Astral Pins", "section-title"))
         win.set_titlebar(header)
-        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER)
+        # Fit the dashboard's natural height on startup while allowing scrolling
+        # when the window is resized smaller or constrained by the display.
+        scroll = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER,
+                                    propagate_natural_height=True)
         win.set_child(scroll)
         box = column(14, "content")
         scroll.set_child(box)
